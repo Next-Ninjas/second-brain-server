@@ -2,6 +2,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { webClientUrl } from "./utils/environment/index.js";
+import { authenticationsRoute } from "./routes/authentications/index.js";
 
 const allRoutes = new Hono();
 
@@ -13,10 +14,10 @@ allRoutes.use(
     exposeHeaders: ["Content-Length"],
     credentials: true,
     maxAge: 600,
-  }),
+  })
 );
 
-
+allRoutes.route("/authentications", authenticationsRoute);
 serve(allRoutes, ({ port }) => {
   console.log(`\tRunning at http://localhost:${port}`);
 });
