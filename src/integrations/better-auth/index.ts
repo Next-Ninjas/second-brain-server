@@ -29,4 +29,17 @@ export const betterAuthClient = betterAuth({
   verification: {
     modelName: "Verification",
   },
+
+   
+   advanced: {
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+      partitioned: true,
+    },
+  },
+
+
+
+
 });
