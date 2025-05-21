@@ -17,6 +17,11 @@ allRoutes.use(
 );
 
 
+allRoutes.get("/ping", (c) => {
+  return c.json({ message: "heiarfoafaslkdf" });
+});
+
+
 serve(allRoutes, (port) => {
   console.log(`Server is running on port http://localhost:${port}`);
 });
