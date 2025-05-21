@@ -10,16 +10,34 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   name          String?
   email         String   @unique
+  passwordHash  String?
   emailVerified Boolean  @default(false)
   image         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  sessions Session[]
-  accounts Account[]
+  sessions Session[] @relation
+  accounts Account[] @relation
+  memories Memory[]  @relation
+}
+
+model Memory {
+  id         String   @id @default(uuid())
+  userId     String
+  content    String
+  title      String?
+  tags       String[]
+  metadata   Json?
+  isFavorite Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Session {
