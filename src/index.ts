@@ -1,12 +1,22 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { webClientUrl } from "./utils/environment/index.js";
 
-const app = new Hono();
+const allRoutes = new Hono();
 
-app.get("/ping", (c) => {
-  return c.json({ message: "pong" });
-});
+allRoutes.use(
+  cors({
+    origin: webClientUrl,
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Authorization", "Content-Type"],
+    exposeHeaders: ["Content-Length"],
+    credentials: true,
+    maxAge: 600,
+  }),
+);
 
-serve(app, (port) => {
+
+serve(allRoutes, (port) => {
   console.log(`Server is running on port http://localhost:${port}`);
 });
