@@ -1,4 +1,5 @@
-import { betterAuthClient } from "../../integrations/better-auth/index.js";
+
+import { betterAuthClient } from "../../integration/better-auth/index.js";
 import { createUnsecureRoute } from "../middlewares/session-middleware.js";
 
 export const authenticationsRoute = createUnsecureRoute();

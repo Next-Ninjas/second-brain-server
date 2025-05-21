@@ -5,7 +5,7 @@ import { prismaClient } from "../prisma/prisma.js";
 
 export const betterAuthClient = betterAuth({
   baseURL: serverUrl,
-  basePath: "/authentications",
+  basePath: "/auth",
   database: prismaAdapter(prismaClient, {
     provider: "postgresql",
   }),

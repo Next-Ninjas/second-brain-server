@@ -4,7 +4,8 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 
 import { Hono } from "hono";
-import { betterAuthClient } from "../../integrations/better-auth/index.js";
+import { betterAuthClient } from "../../integration/better-auth/index.js";
+
 
 export type SecureSession = {
   Variables: {
