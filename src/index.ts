@@ -4,7 +4,7 @@ import { Hono } from "hono";
 const app = new Hono();
 
 app.get("/ping", (c) => {
-  return c.json({ message: "pong" });
+  return c.json({ message: "heiarfoafaslkdf" });
 });
 
 serve(app, (port) => {
