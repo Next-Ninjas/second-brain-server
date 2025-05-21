@@ -17,7 +17,14 @@ allRoutes.use(
   })
 );
 
-allRoutes.route("/authentications", authenticationsRoute);
+allRoutes.route("/auth", authenticationsRoute);
+
+allRoutes.get("/", async (context) => {
+  return context.json({
+    message: "hello",
+  });
+});
+
 serve(allRoutes, ({ port }) => {
   console.log(`\tRunning at http://localhost:${port}`);
 });
