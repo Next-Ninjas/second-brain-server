@@ -1,2 +1,8 @@
-# second-brain-server
-Second Brain is a full-stack AI-powered personal knowledge assistant.
+```
+npm install
+npm run dev
+```
+
+```
+open http://localhost:3000
+```
