@@ -3,6 +3,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { webClientUrl } from "./utils/environment/index.js";
 import { authenticationsRoute } from "./routes/authentications/index.js";
+import memoryRoutes from "./routes/memories/index.js";
+
 
 const allRoutes = new Hono();
 
@@ -18,6 +20,7 @@ allRoutes.use(
 );
 
 allRoutes.route("/auth", authenticationsRoute);
+allRoutes.route("/memories", memoryRoutes);
 
 allRoutes.get("/", async (context) => {
   return context.json({
