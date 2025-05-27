@@ -28,7 +28,7 @@ FROM node:22.1.0
 WORKDIR /app
 
 # Install pnpm globally
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm
 
 # Copy dependency manifests
 COPY pnpm-lock.yaml ./
