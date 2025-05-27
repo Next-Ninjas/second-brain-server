@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 
 import { prismaClient } from "../../integration/prisma/prisma.js";
 
-import { createSecureRoute, createUnsecureRoute } from "../middlewares/session-middleware.js";
+import { createSecureRoute } from "../middlewares/session-middleware.js";
 import { memorySchema } from "../../validators/memory.js";
 import { getUserNamespace } from "../../lib/pinecone.js";
 
