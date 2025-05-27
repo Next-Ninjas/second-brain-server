@@ -155,4 +155,4 @@ jobs:
                 SERVER_URL=${{ secrets.SERVER_URL }} \
                 WEB_CLIENT_URL=${{ secrets.WEB_CLIENT_URL }} \
                 BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }} \
-                PINECONE_API_KEY = ${{ secrets.PINECONE_API_KEY }}
+                PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}
