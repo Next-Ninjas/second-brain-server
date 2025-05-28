@@ -28,6 +28,7 @@ model Memory {
   userId     String
   content    String
   title      String?
+  url        String?
   tags       String[]
   metadata   Json?
   isFavorite Boolean  @default(false)

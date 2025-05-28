@@ -1,4 +1,3 @@
-
 // import { zValidator } from "@hono/zod-validator";
 
 // import { prismaClient } from "../../integration/prisma/prisma.js";
@@ -8,8 +7,6 @@
 // import { getUserNamespace } from "../../lib/pinecone.js";
 
 // const memoryRoutes = createSecureRoute();
-
-
 
 // // ✅ CREATE MEMORY + Pinecone upsert
 // memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
@@ -47,8 +44,6 @@
 //     where: { userId: user.id },
 //     orderBy: { createdAt: "desc" },
 //   });
-
-
 
 //   return c.json(memories);
 // });
@@ -119,8 +114,6 @@
 
 // export default memoryRoutes;
 
-
-
 import { zValidator } from "@hono/zod-validator";
 
 import { prismaClient } from "../../integration/prisma/prisma.js";
@@ -140,6 +133,7 @@ memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
       content: body.content,
       title: body.title,
       tags: body.tags || [],
+      url: body.url,
       metadata: body.metadata,
       isFavorite: body.isFavorite ?? false,
     },
@@ -188,6 +182,7 @@ memoryRoutes.put("/:id", zValidator("json", memorySchema), async (c) => {
       content: body.content,
       title: body.title,
       tags: body.tags || [],
+      url: body.url,
       metadata: body.metadata,
       isFavorite: body.isFavorite ?? false,
     },
