@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { webClientUrl } from "./utils/environment/index.js";
 import { authenticationsRoute } from "./routes/authentications/index.js";
 import memoryRoutes from "./routes/memories/index.js";
+import chatRoute from "./routes/rag/index.js";
 
 
 const allRoutes = new Hono();
@@ -21,10 +22,13 @@ allRoutes.use(
 
 allRoutes.route("/auth", authenticationsRoute);
 allRoutes.route("/memories", memoryRoutes);
+allRoutes.route("/ai/chat",chatRoute);
+
+
 
 allRoutes.get("/", async (context) => {
   return context.json({
-    message: "hello",
+    message: "hello welcome to second brain",
   });
 });
 
