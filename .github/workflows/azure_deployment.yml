@@ -10,7 +10,7 @@ env:
   RESOURCE_GROUP: SecondBrain
   CONTAINER_APPS_ENVIRONMENT: SecondBrainContainerAppsEnvironment
   LOG_ANALYTICS_WORKSPACE: SecondBrainLogAnalyticsWorkspace
-  ACR_REGISTRY: secondbrain.azurecr.io
+  ACR_REGISTRY: secondbrainneuronote.azurecr.io
   ACR_REPOSITORY_NAME: secondbrain
   CONTAINER_APP_NAME: secondbrain
   TARGET_PORT: 3000
