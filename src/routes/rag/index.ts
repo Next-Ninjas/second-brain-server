@@ -1,14 +1,14 @@
-import { Hono } from "hono";
+
 
 import { createSecureRoute } from "../middlewares/session-middleware";
 import { mistralApiKey } from "../../utils/environment";
 import { Mistral } from "@mistralai/mistralai";
 
-const chatRoute = createSecureRoute();
+const chatRoutes = createSecureRoute();
 
 const mistral = new Mistral({ apiKey: mistralApiKey });
 
-chatRoute.get("/ai/chat", async (c) => {
+chatRoutes.get("/ai/chat", async (c) => {
   const { q: query } = c.req.query();
 
   if (!query || query.trim() === "") {
@@ -16,7 +16,7 @@ chatRoute.get("/ai/chat", async (c) => {
   }
 
   const response = await mistral.chat.complete({
-    model: "mistral-large-latest", // You can switch to small if needed
+    model: "mistral-large-latest", 
     messages: [
       {
         role: "user",
@@ -34,4 +34,4 @@ chatRoute.get("/ai/chat", async (c) => {
   });
 });
 
-export default chatRoute;
+export default chatRoutes;
