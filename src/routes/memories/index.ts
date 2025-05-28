@@ -19,7 +19,6 @@ memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
       content: body.content,
       title: body.title,
       tags: body.tags || [],
-      metadata: body.metadata,
       isFavorite: body.isFavorite ?? false,
     },
   });
@@ -182,7 +181,6 @@ memoryRoutes.put("/:id", zValidator("json", memorySchema), async (c) => {
       title: body.title,
       tags: body.tags || [],
       url: body.url,
-      metadata: body.metadata,
       isFavorite: body.isFavorite ?? false,
     },
   });
