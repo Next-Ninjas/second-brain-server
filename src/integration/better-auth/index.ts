@@ -31,15 +31,20 @@ export const betterAuthClient = betterAuth({
   },
 
    
-   advanced: {
-    defaultCookieAttributes: {
-      sameSite: "none",
-      secure: true,
-      partitioned: true,
+  //  advanced: {
+  //   defaultCookieAttributes: {
+  //     sameSite: "none",
+  //     secure: true,
+  //     partitioned: true,
+  //   },
+  // },
+
+advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: "neuronote.site",
     },
   },
-
-
 
 
 });
