@@ -4,37 +4,37 @@
 
 // import { createSecureRoute } from "../middlewares/session-middleware.js";
 // import { memorySchema } from "../../validators/memory.js";
-// import { getUserNamespace } from "../../lib/pinecone.js";
+import { getUserNamespace } from "../../lib/pinecone.js";
 
-// const memoryRoutes = createSecureRoute();
+const memoryRoutes = createSecureRoute();
 
-// // ✅ CREATE MEMORY + Pinecone upsert
-// memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
-//   const user = c.get("user");
-//   const body = await c.req.json();
+// ✅ CREATE MEMORY + Pinecone upsert
+memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
+  const user = c.get("user");
+  const body = await c.req.json();
 
-//   const memory = await prismaClient.memory.create({
-//     data: {
-//       userId: user.id,
-//       content: body.content,
-//       title: body.title,
-//       tags: body.tags || [],
-//       metadata: body.metadata,
-//       isFavorite: body.isFavorite ?? false,
-//     },
-//   });
+  const memory = await prismaClient.memory.create({
+    data: {
+      userId: user.id,
+      content: body.content,
+      title: body.title,
+      tags: body.tags || [],
+      metadata: body.metadata,
+      isFavorite: body.isFavorite ?? false,
+    },
+  });
 
-//   const ns = getUserNamespace(user.id);
-//   await ns.upsertRecords([
-//     {
-//       id: memory.id,
-//       text: memory.content,
-//       metadata: [user.id], // Assuming metadata should be a string array
-//     },
-//   ]);
+  const ns = getUserNamespace(user.id);
+  await ns.upsertRecords([
+    {
+      id: memory.id,
+      text: memory.content,
+      metadata: [user.id], 
+    },
+  ]);
 
-//   return c.json(memory);
-// });
+  return c.json(memory);
+});
 
 // // ✅ GET ALL memories for the user
 // memoryRoutes.get("/", async (c) => {
@@ -120,27 +120,26 @@ import { prismaClient } from "../../integration/prisma/prisma.js";
 import { createSecureRoute } from "../middlewares/session-middleware.js";
 import { memorySchema } from "../../validators/memory.js";
 
-const memoryRoutes = createSecureRoute();
 
 // ✅ CREATE MEMORY
-memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
-  const user = c.get("user");
-  const body = await c.req.json();
+// memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
+//   const user = c.get("user");
+//   const body = await c.req.json();
 
-  const memory = await prismaClient.memory.create({
-    data: {
-      userId: user.id,
-      content: body.content,
-      title: body.title,
-      tags: body.tags || [],
-      url: body.url,
-      metadata: body.metadata,
-      isFavorite: body.isFavorite ?? false,
-    },
-  });
+//   const memory = await prismaClient.memory.create({
+//     data: {
+//       userId: user.id,
+//       content: body.content,
+//       title: body.title,
+//       tags: body.tags || [],
+//       url: body.url,
+//       metadata: body.metadata,
+//       isFavorite: body.isFavorite ?? false,
+//     },
+//   });
 
-  return c.json(memory);
-});
+//   return c.json(memory);
+// });
 
 // ✅ GET ALL memories for the user
 memoryRoutes.get("/", async (c) => {
