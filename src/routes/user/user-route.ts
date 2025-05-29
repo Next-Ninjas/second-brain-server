@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { prismaClient as prisma } from "../integration/prisma/prisma";
+import { prismaClient as prisma } from "../../integration/prisma/prisma";
+import { createSecureRoute } from "../middlewares/session-middleware";
 
-import { createSecureRoute } from "../routes/middlewares/session-middleware";
 const userRoute = createSecureRoute();
 enum GetMeError {
   USER_NOT_FOUND = "USER_NOT_FOUND",

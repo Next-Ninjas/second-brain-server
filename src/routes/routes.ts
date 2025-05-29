@@ -1,13 +1,13 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { webClientUrl } from "./utils/environment/index.js";
-import { authenticationsRoute } from "./routes/authentications/index.js";
-import memoryRoutes from "./routes/memories/index.js";
-import chatRoutes from "./routes/rag/index.js";
+import { webClientUrl } from "../utils/environment/index.js";
+import { authenticationsRoute } from "./authentications/index.js";
+import memoryRoutes from "./memories/index.js";
+import chatRoutes from "./rag/index.js";
+import { userRoute } from "./user/user-route.js";
 
-
-const allRoutes = new Hono();
+export const allRoutes = new Hono();
 
 allRoutes.use(
   cors({
@@ -22,9 +22,8 @@ allRoutes.use(
 
 allRoutes.route("/auth", authenticationsRoute);
 allRoutes.route("/memories", memoryRoutes);
-allRoutes.route("/ai/chat",chatRoutes);
-
-
+allRoutes.route("/ai/chat", chatRoutes);
+allRoutes.route("/user", userRoute);
 
 allRoutes.get("/", async (context) => {
   return context.json({
