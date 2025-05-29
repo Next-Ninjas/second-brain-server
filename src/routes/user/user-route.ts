@@ -1,6 +1,6 @@
 
-import { prismaClient as prisma } from "../../integration/prisma/prisma";
-import { createSecureRoute } from "../middlewares/session-middleware";
+import { prismaClient as prisma } from "../../integration/prisma/prisma.js";
+import { createSecureRoute } from "../middlewares/session-middleware.js";
 
 export const  userRoute = createSecureRoute();
 enum GetMeError {

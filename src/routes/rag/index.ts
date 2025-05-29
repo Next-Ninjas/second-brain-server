@@ -1,4 +1,4 @@
-import { createSecureRoute } from "../middlewares/session-middleware";
+import { createSecureRoute } from "../middlewares/session-middleware.js";
 import { mistralApiKey, pineconeApiKey } from "../../utils/environment";
 import { Mistral } from "@mistralai/mistralai";
 import { Pinecone } from "@pinecone-database/pinecone";
