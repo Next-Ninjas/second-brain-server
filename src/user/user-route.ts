@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { prismaClient as prisma } from "../integration/prisma/prisma";
-import { sessionMiddleware } from "better-auth/api";
+
 import { createSecureRoute } from "../routes/middlewares/session-middleware";
 const userRoute = createSecureRoute();
 enum GetMeError {
