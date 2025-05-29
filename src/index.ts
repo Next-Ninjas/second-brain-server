@@ -7,4 +7,9 @@ import { allRoutes } from "./routes/routes.js";
 const app = new Hono();
 
 app.route("/", allRoutes);
-serve(app);
+
+
+serve(app, ({ port }) => {
+  console.log(`\tRunning at http://localhost:${port}`);
+});
+

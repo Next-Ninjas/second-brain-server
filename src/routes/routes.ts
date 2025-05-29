@@ -32,6 +32,3 @@ allRoutes.get("/", async (context) => {
   });
 });
 
-serve(allRoutes, ({ port }) => {
-  console.log(`\tRunning at http://localhost:${port}`);
-});
