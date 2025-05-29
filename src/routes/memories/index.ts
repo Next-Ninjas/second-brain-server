@@ -28,7 +28,7 @@ memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
   });
 
   const index = pc.index("memories");
-  const namespace = index.namespace(memory.userId); 
+  const namespace = index.namespace(user.id); 
 
   const records = [
     {
