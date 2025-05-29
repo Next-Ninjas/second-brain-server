@@ -12,36 +12,6 @@ export const pc = new Pinecone({ apiKey: pineconeApiKey });
 
 const memoryRoutes = createSecureRoute();
 
-// ✅ CREATE MEMORY + Pinecone upsert
-// memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
-//   const user = c.get("user");
-//   const body = await c.req.json();
-
-//   const memory = await prismaClient.memory.create({
-//     data: {
-//       userId: user.id,
-//       content: body.content,
-//       title: body.title,
-//       tags: body.tags || [],
-//       isFavorite: body.isFavorite ?? false,
-//     },
-//   });
-
-//    const namespace = pc.index("memories").namespace("user.id");
-
-
- 
-//     await namespace.upsertRecords(data);
-//   // await ns.upsertRecords([
-//   //   {
-//   //     id: memory.id,
-//   //     text: memory.content,
-//   //     metadata: [user.id], 
-//   //   },
-//   // ]);
-
-//   return c.json(memory);
-// });
 
 memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
   const user = c.get("user");
