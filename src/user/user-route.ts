@@ -8,7 +8,7 @@ enum GetMeError {
   UNKNOWN = "UNKNOWN",
 }
 
-userRoute.all("/me", async (context) => {
+userRoute.get("/me", async (context) => {
   const user = context.get("user");
   const userId = user?.id;
 
