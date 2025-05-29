@@ -56,13 +56,17 @@ memoryRoutes.get("/", async (c) => {
 });
 
 // to get recent 5 memories
-memoryRoutes.get("/", async (c) => {
+memoryRoutes.get("/recent", async (c) => {
   const user = c.get("user");
+  const { limit = "5" } = c.req.query(); // Default limit to 5 if not provided
+
+  const parsedLimit = parseInt(limit);
+  const safeLimit = isNaN(parsedLimit) || parsedLimit <= 0 ? 5 : parsedLimit;
 
   const memories = await prismaClient.memory.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
-    take: 5,
+    take: safeLimit,
   });
 
   return c.json(memories);

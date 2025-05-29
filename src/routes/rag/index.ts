@@ -9,7 +9,7 @@ const pc = new Pinecone({ apiKey: pineconeApiKey });
 
 chatRoutes.get("/ai/chat", async (c) => {
   const user = c.get("user");
-  const { q: query, limit = "5", offset = "0" } = c.req.query();
+  const { q: query, limit = "2", offset = "0" } = c.req.query();
 
   if (!query || query.trim() === "") {
     return c.json({ success: false, message: "Query 'q' is required." }, 400);
