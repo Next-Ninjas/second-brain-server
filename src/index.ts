@@ -8,7 +8,7 @@ const app = new Hono();
 
 app.route("/", allRoutes);
 
-app.get("/", async (context) => {
+app.get("/ping", async (context) => {
   return context.json({
     message: "hello welcome to neuronote",
   });
