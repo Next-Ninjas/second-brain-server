@@ -8,6 +8,11 @@ const app = new Hono();
 
 app.route("/", allRoutes);
 
+app.get("/", async (context) => {
+  return context.json({
+    message: "hello welcome to neuronote",
+  });
+});
 
 serve(app, ({ port }) => {
   console.log(`\tRunning at http://localhost:${port}`);

@@ -26,9 +26,5 @@ allRoutes.route("/memories", memoryRoutes);
 allRoutes.route("/", chatRoutes);
 allRoutes.route("/user", userRoute);
 
-allRoutes.get("/", async (context) => {
-  return context.json({
-    message: "hello welcome to second brain",
-  });
-});
+
 
