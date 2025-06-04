@@ -25,6 +25,6 @@ allRoutes.use(
 
 allRoutes.route("/auth", authenticationsRoute);
 allRoutes.route("/memories", memoryRoutes);
-allRoutes.route("/", chatRoutes);
+allRoutes.route("/ai", chatRoutes);
 allRoutes.route("/user", userRoute);
 allRoutes.route("/dashboard", dashboardRoute);
