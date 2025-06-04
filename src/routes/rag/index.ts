@@ -1,95 +1,15 @@
-// import { createSecureRoute } from "../middlewares/session-middleware.js";
-// import { mistralApiKey, pineconeApiKey } from "../../utils/environment";
-// import { Mistral } from "@mistralai/mistralai";
-// import { Pinecone } from "@pinecone-database/pinecone";
-
-// const chatRoutes = createSecureRoute();
-// const mistral = new Mistral({ apiKey: mistralApiKey });
-// const pc = new Pinecone({ apiKey: pineconeApiKey });
-
-// chatRoutes.get("/ai/chat", async (c) => {
-//   const user = c.get("user");
-//   const { q: query, limit = "2", offset = "0" } = c.req.query();
-
-//   if (!query || query.trim() === "") {
-//     return c.json({ success: false, message: "Query 'q' is required." }, 400);
-//   }
-
-//   // Step 1: Search Pinecone for relevant memories
-//   const namespace = pc.index("memories").namespace(user.id);
-//   const pineconeResponse = await namespace.searchRecords({
-//     query: {
-//       inputs: { text: query },
-//       topK: parseInt(limit),
-//     },
-//     rerank: {
-//       model: "bge-reranker-v2-m3",
-//       topN: parseInt(limit),
-//       rankFields: ["text"],
-//     },
-//   });
-
-//   const memories = pineconeResponse.result.hits.map((hit) => {
-//     const fields = hit.fields as {
-//       text: string;
-//       title?: string;
-//     };
-//     return {
-//       id: hit._id,
-//       title: fields?.title || "Untitled",
-//       text: fields.text,
-//     };
-//   });
-
-//   // Step 2: Construct context string for Mistral
-//   const contextText = memories.map((m) => `- ${m.title}: ${m.text}`).join("\n");
-//   const prompt = `
-// ## QUERY
-// ${query}
-// ---
-// ## CONTEXT
-// ${contextText}
-// `.trim();
-
-//   // Step 3: Ask Mistral for summary/answer
-//   const response = await mistral.chat.complete({
-//     model: "mistral-small-latest", // You can change to large if needed
-//     messages: [{ role: "user", content: prompt }],
-//   });
-
-//   const summary = response.choices?.[0]?.message?.content || "No summary generated.";
-
-//   return c.json({
-//     success: true,
-//     query,
-//     summary,
-//     results: memories,
-//     meta: {
-//       count: memories.length,
-//       limit: parseInt(limit),
-//       offset: parseInt(offset),
-//     },
-//   });
-// });
-
-// export default chatRoutes;
-
-
-
-
 import { createSecureRoute } from "../middlewares/session-middleware.js";
 import { mistralApiKey, pineconeApiKey } from "../../utils/environment";
 import { Mistral } from "@mistralai/mistralai";
 import { Pinecone } from "@pinecone-database/pinecone";
-import { prismaClient } from "../../integration/prisma/prisma.js";
 
 const chatRoutes = createSecureRoute();
 const mistral = new Mistral({ apiKey: mistralApiKey });
 const pc = new Pinecone({ apiKey: pineconeApiKey });
 
-chatRoutes.get("/chat", async (c) => {
+chatRoutes.get("/ai/chat", async (c) => {
   const user = c.get("user");
-  const { q: query } = c.req.query();
+  const { q: query, limit = "2", offset = "0" } = c.req.query();
 
   if (!query || query.trim() === "") {
     return c.json({ success: false, message: "Query 'q' is required." }, 400);
@@ -100,41 +20,29 @@ chatRoutes.get("/chat", async (c) => {
   const pineconeResponse = await namespace.searchRecords({
     query: {
       inputs: { text: query },
-      topK: 20, // broader search
+      topK: parseInt(limit),
     },
     rerank: {
       model: "bge-reranker-v2-m3",
-      topN: 5,
-      rankFields: ["title"],
+      topN: parseInt(limit),
+      rankFields: ["text"],
     },
   });
 
-  // Step 2: Filter hits based on score
-  const relevantHits = pineconeResponse.result.hits.filter(
-    (hit) => hit._score && hit._score >= 0.2
-  );
-
-  const ids = relevantHits.map((hit) => hit._id);
-
-  // Step 3: Fetch full memory data from Supabase (via Prisma)
-  const memoryRecords = await prismaClient.memory.findMany({
-    where: {
-      id: { in: ids },
-      userId: user.id,
-    },
+  const memories = pineconeResponse.result.hits.map((hit) => {
+    const fields = hit.fields as {
+      text: string;
+      title?: string;
+    };
+    return {
+      id: hit._id,
+      title: fields?.title || "Untitled",
+      text: fields.text,
+    };
   });
 
-  const memoryMap = new Map(memoryRecords.map((m) => [m.id, m]));
-
-  const results = relevantHits
-    .map((hit) => memoryMap.get(hit._id))
-    .filter((m): m is NonNullable<typeof m> => Boolean(m)); // Type narrowing
-
-  // Step 4: Construct context for Mistral
-  const contextText = results
-    .map((m) => `- ${m.title || "Untitled"}: ${m.content}`)
-    .join("\n");
-
+  // Step 2: Construct context string for Mistral
+  const contextText = memories.map((m) => `- ${m.title}: ${m.text}`).join("\n");
   const prompt = `
 ## QUERY
 ${query}
@@ -143,9 +51,9 @@ ${query}
 ${contextText}
 `.trim();
 
-  // Step 5: Mistral API for answer
+  // Step 3: Ask Mistral for summary/answer
   const response = await mistral.chat.complete({
-    model: "mistral-small-latest",
+    model: "mistral-small-latest", // You can change to large if needed
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -155,15 +63,107 @@ ${contextText}
     success: true,
     query,
     summary,
-    results,
+    results: memories,
     meta: {
-      count: results.length,
-      threshold: 0.2,
+      count: memories.length,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
     },
   });
 });
 
 export default chatRoutes;
+
+
+
+
+// import { createSecureRoute } from "../middlewares/session-middleware.js";
+// import { mistralApiKey, pineconeApiKey } from "../../utils/environment";
+// import { Mistral } from "@mistralai/mistralai";
+// import { Pinecone } from "@pinecone-database/pinecone";
+// import { prismaClient } from "../../integration/prisma/prisma.js";
+
+// const chatRoutes = createSecureRoute();
+// const mistral = new Mistral({ apiKey: mistralApiKey });
+// const pc = new Pinecone({ apiKey: pineconeApiKey });
+
+// chatRoutes.get("/chat", async (c) => {
+//   const user = c.get("user");
+//   const { q: query } = c.req.query();
+
+//   if (!query || query.trim() === "") {
+//     return c.json({ success: false, message: "Query 'q' is required." }, 400);
+//   }
+
+//   // Step 1: Search Pinecone for relevant memories
+//   const namespace = pc.index("memories").namespace(user.id);
+//   const pineconeResponse = await namespace.searchRecords({
+//     query: {
+//       inputs: { text: query },
+//       topK: 20, // broader search
+//     },
+//     rerank: {
+//       model: "bge-reranker-v2-m3",
+//       topN: 5,
+//       rankFields: ["title"],
+//     },
+//   });
+
+//   // Step 2: Filter hits based on score
+//   const relevantHits = pineconeResponse.result.hits.filter(
+//     (hit) => hit._score && hit._score >= 0.2
+//   );
+
+//   const ids = relevantHits.map((hit) => hit._id);
+
+//   // Step 3: Fetch full memory data from Supabase (via Prisma)
+//   const memoryRecords = await prismaClient.memory.findMany({
+//     where: {
+//       id: { in: ids },
+//       userId: user.id,
+//     },
+//   });
+
+//   const memoryMap = new Map(memoryRecords.map((m) => [m.id, m]));
+
+//   const results = relevantHits
+//     .map((hit) => memoryMap.get(hit._id))
+//     .filter((m): m is NonNullable<typeof m> => Boolean(m)); // Type narrowing
+
+//   // Step 4: Construct context for Mistral
+//   const contextText = results
+//     .map((m) => `- ${m.title || "Untitled"}: ${m.content}`)
+//     .join("\n");
+
+//   const prompt = `
+// ## QUERY
+// ${query}
+// ---
+// ## CONTEXT
+// ${contextText}
+// `.trim();
+
+//   // Step 5: Mistral API for answer
+//   const response = await mistral.chat.complete({
+//     model: "mistral-small-latest",
+//     messages: [{ role: "user", content: prompt }],
+//   });
+
+//   const summary = response.choices?.[0]?.message?.content || "No summary generated.";
+
+//   return c.json({
+//     success: true,
+//     query,
+//     summary,
+//     results,
+//     meta: {
+//       count: results.length,
+//       threshold: 0.2,
+//     },
+//   });
+// });
+
+// export default chatRoutes;
 
 
 
