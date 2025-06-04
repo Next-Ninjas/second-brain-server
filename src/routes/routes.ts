@@ -6,7 +6,9 @@ import { authenticationsRoute } from "./authentications/index.js";
 import memoryRoutes from "./memories/index.js";
 import chatRoutes from "./rag/index.js";
 import { userRoute } from "./user/user-route.js";
-
+import { createSecureRoute } from "./middlewares/session-middleware.js";
+import { prismaClient } from "../integration/prisma/prisma.js";
+import { dashboardRoute } from "./search/index.js";
 
 export const allRoutes = new Hono();
 
@@ -25,6 +27,4 @@ allRoutes.route("/auth", authenticationsRoute);
 allRoutes.route("/memories", memoryRoutes);
 allRoutes.route("/", chatRoutes);
 allRoutes.route("/user", userRoute);
-
-
-
+allRoutes.route("/dashboard", dashboardRoute);
