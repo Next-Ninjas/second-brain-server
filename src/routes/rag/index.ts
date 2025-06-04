@@ -7,7 +7,7 @@ const chatRoutes = createSecureRoute();
 const mistral = new Mistral({ apiKey: mistralApiKey });
 const pc = new Pinecone({ apiKey: pineconeApiKey });
 
-chatRoutes.get("/ai/chat", async (c) => {
+chatRoutes.get("/chat", async (c) => {
   const user = c.get("user");
   const { q: query, limit = "2", offset = "0" } = c.req.query();
 
