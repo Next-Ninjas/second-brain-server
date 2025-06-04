@@ -9,7 +9,7 @@ export const betterAuthClient = betterAuth({
   database: prismaAdapter(prismaClient, {
     provider: "postgresql",
   }),
-  trustedOrigins: [webClientUrl],
+  trustedOrigins: [webClientUrl ,serverUrl],
   emailAndPassword: {
     enabled: true,
   },
@@ -23,7 +23,7 @@ export const betterAuthClient = betterAuth({
     modelName: "Session",
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60,
+      maxAge: 60 * 60,
     },
   },
   verification: {

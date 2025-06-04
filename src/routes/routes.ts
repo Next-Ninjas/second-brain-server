@@ -7,6 +7,7 @@ import memoryRoutes from "./memories/index.js";
 import chatRoutes from "./rag/index.js";
 import { userRoute } from "./user/user-route.js";
 
+
 export const allRoutes = new Hono();
 
 allRoutes.use(
@@ -22,15 +23,8 @@ allRoutes.use(
 
 allRoutes.route("/auth", authenticationsRoute);
 allRoutes.route("/memories", memoryRoutes);
-allRoutes.route("/ai/chat", chatRoutes);
+allRoutes.route("/", chatRoutes);
 allRoutes.route("/user", userRoute);
 
-allRoutes.get("/", async (context) => {
-  return context.json({
-    message: "hello welcome to second brain",
-  });
-});
 
-serve(allRoutes, ({ port }) => {
-  console.log(`\tRunning at http://localhost:${port}`);
-});
+
