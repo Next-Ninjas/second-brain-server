@@ -1,6 +1,11 @@
 import { prismaClient as prisma } from "../../integration/prisma/prisma.js";
 import { createSecureRoute } from "../middlewares/session-middleware.js";
-
+import { IncomingForm } from "formidable";
+import { mkdir, readFile, writeFile } from "fs/promises";
+import path from "path";
+import fs from "fs";
+import { nanoid } from "nanoid";
+import { HTTPException } from "hono/http-exception";
 export const userRoute = createSecureRoute();
 enum GetMeError {
   USER_NOT_FOUND = "USER_NOT_FOUND",
@@ -92,3 +97,53 @@ userRoute.get("/me", async (context) => {
   }
 });
 
+userRoute.post("/me", async (c) => {
+  const user = c.get("user");
+
+  if (!user?.id) {
+    throw new HTTPException(401, { message: "Unauthorized" });
+  }
+
+  const form = new IncomingForm({ multiples: false, keepExtensions: true });
+
+  const { files } = await new Promise<{ fields: any; files: any }>(
+    (resolve, reject) => {
+      form.parse((c.req as any).raw ?? (c.req as any), (err, fields, files) => {
+        if (err) reject(err);
+        else resolve({ fields, files });
+      });
+    }
+  );
+
+  const photo = files.photo;
+
+  if (!photo || Array.isArray(photo) || !photo.filepath) {
+    throw new HTTPException(400, { message: "Photo file is required" });
+  }
+
+  // Ensure the uploads directory exists
+  const uploadsDir = path.resolve("uploads");
+  if (!fs.existsSync(uploadsDir)) {
+    await mkdir(uploadsDir, { recursive: true });
+  }
+
+  // Generate a unique filename and store the image
+  const ext = path.extname(photo.originalFilename || ".jpg");
+  const filename = `${nanoid()}${ext}`;
+  const filePath = path.join(uploadsDir, filename);
+  const fileBuffer = await readFile(photo.filepath);
+  await writeFile(filePath, fileBuffer);
+
+  // Update the user in the database
+  const imageUrl = `/uploads/${filename}`; // use a public URL in production
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: { image: imageUrl },
+  });
+
+  return c.json({
+    message: "Profile photo uploaded successfully",
+    image: imageUrl,
+    user: updatedUser,
+  });
+});
