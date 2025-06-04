@@ -1,16 +1,12 @@
 import { prismaClient as prisma } from "../../integration/prisma/prisma.js";
 import { createSecureRoute } from "../middlewares/session-middleware.js";
 import { IncomingForm } from "formidable";
-import { mkdir, readFile, writeFile } from "fs/promises";
-import * as path from "path";
 import * as fs from "fs";
-import { nanoid } from "nanoid";
+import * as path from "path";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import { HTTPException } from "hono/http-exception";
+
 export const userRoute = createSecureRoute();
-enum GetMeError {
-  USER_NOT_FOUND = "USER_NOT_FOUND",
-  UNKNOWN = "UNKNOWN",
-}
 
 userRoute.get("/me", async (context) => {
   const user = context.get("user");
@@ -20,80 +16,73 @@ userRoute.get("/me", async (context) => {
     return context.json({ error: "User not found" }, 404);
   }
 
-  if (context.req.method === "GET") {
-    try {
-      const userData = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          emailVerified: true,
-          image: true,
-          createdAt: true,
-          updatedAt: true,
-          sessions: {
-            select: {
-              id: true,
-              token: true,
-              expiresAt: true,
-              ipAddress: true,
-              userAgent: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          },
-          accounts: {
-            select: {
-              id: true,
-              accountId: true,
-              providerId: true,
-              accessToken: true,
-              refreshToken: true,
-              accessTokenExpiresAt: true,
-              refreshTokenExpiresAt: true,
-              scope: true,
-              idToken: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          },
-          memories: {
-            select: {
-              id: true,
-              title: true,
-              content: true,
-              url: true,
-              tags: true,
-              metadata: true,
-              isFavorite: true,
-              createdAt: true,
-              updatedAt: true,
-            },
+  try {
+    const userData = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        emailVerified: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
+        sessions: {
+          select: {
+            id: true,
+            token: true,
+            expiresAt: true,
+            ipAddress: true,
+            userAgent: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
-      });
-
-      if (!userData) {
-        return context.json({ error: "User not found" }, 404);
-      }
-
-      return context.json(
-        {
-          user: {
-            ...userData,
-            name: userData.name || "",
-            image: userData.image || "",
+        accounts: {
+          select: {
+            id: true,
+            accountId: true,
+            providerId: true,
+            accessToken: true,
+            refreshToken: true,
+            accessTokenExpiresAt: true,
+            refreshTokenExpiresAt: true,
+            scope: true,
+            idToken: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
-        200
-      );
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      return context.json({ error: "Internal server error" }, 500);
+        memories: {
+          select: {
+            id: true,
+            title: true,
+            content: true,
+            url: true,
+            tags: true,
+            metadata: true,
+            isFavorite: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
+    if (!userData) {
+      return context.json({ error: "User not found" }, 404);
     }
-  } else {
-    return context.json({ error: "Method not allowed" }, 405);
+
+    return context.json({
+      user: {
+        ...userData,
+        name: userData.name || "",
+        image: userData.image || "",
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return context.json({ error: "Internal server error" }, 500);
   }
 });
 
@@ -106,14 +95,12 @@ userRoute.post("/me", async (c) => {
 
   const form = new IncomingForm({ multiples: false, keepExtensions: true });
 
-  const { files } = await new Promise<{ fields: any; files: any }>(
-    (resolve, reject) => {
-      form.parse((c.req as any).raw ?? (c.req as any), (err, fields, files) => {
-        if (err) reject(err);
-        else resolve({ fields, files });
-      });
-    }
-  );
+  const { files } = await new Promise<{ fields: any; files: any }>((resolve, reject) => {
+    form.parse((c.req as any).raw ?? (c.req as any), (err, fields, files) => {
+      if (err) reject(err);
+      else resolve({ fields, files });
+    });
+  });
 
   const photo = files.photo;
 
@@ -121,21 +108,24 @@ userRoute.post("/me", async (c) => {
     throw new HTTPException(400, { message: "Photo file is required" });
   }
 
-  // Ensure the uploads directory exists
+  // Dynamic import to fix Azure (ESM-only nanoid)
+  const { nanoid } = await import("nanoid");
+
+  // Ensure upload directory
   const uploadsDir = path.resolve("uploads");
   if (!fs.existsSync(uploadsDir)) {
     await mkdir(uploadsDir, { recursive: true });
   }
 
-  // Generate a unique filename and store the image
+  // Save image
   const ext = path.extname(photo.originalFilename || ".jpg");
   const filename = `${nanoid()}${ext}`;
   const filePath = path.join(uploadsDir, filename);
   const fileBuffer = await readFile(photo.filepath);
   await writeFile(filePath, fileBuffer);
 
-  // Update the user in the database
-  const imageUrl = `/uploads/${filename}`; // use a public URL in production
+  const imageUrl = `/uploads/${filename}`; // Consider CDN/public path in production
+
   const updatedUser = await prisma.user.update({
     where: { id: user.id },
     data: { image: imageUrl },
