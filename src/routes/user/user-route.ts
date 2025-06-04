@@ -1,8 +1,7 @@
-
 import { prismaClient as prisma } from "../../integration/prisma/prisma.js";
 import { createSecureRoute } from "../middlewares/session-middleware.js";
 
-export const  userRoute = createSecureRoute();
+export const userRoute = createSecureRoute();
 enum GetMeError {
   USER_NOT_FOUND = "USER_NOT_FOUND",
   UNKNOWN = "UNKNOWN",
@@ -92,3 +91,4 @@ userRoute.get("/me", async (context) => {
     return context.json({ error: "Method not allowed" }, 405);
   }
 });
+
