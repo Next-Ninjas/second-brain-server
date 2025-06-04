@@ -95,12 +95,14 @@ userRoute.post("/me", async (c) => {
 
   const form = new IncomingForm({ multiples: false, keepExtensions: true });
 
-  const { files } = await new Promise<{ fields: any; files: any }>((resolve, reject) => {
-    form.parse((c.req as any).raw ?? (c.req as any), (err, fields, files) => {
-      if (err) reject(err);
-      else resolve({ fields, files });
-    });
-  });
+  const { files } = await new Promise<{ fields: any; files: any }>(
+    (resolve, reject) => {
+      form.parse((c.req as any).raw ?? (c.req as any), (err, fields, files) => {
+        if (err) reject(err);
+        else resolve({ fields, files });
+      });
+    }
+  );
 
   const photo = files.photo;
 
