@@ -3,12 +3,13 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { webClientUrl } from "../utils/environment/index.js";
 import { authenticationsRoute } from "./authentications/index.js";
-import memoryRoutes from "./memories/index.js";
-import chatRoutes from "./rag/index.js";
+
+
 import { userRoute } from "./user/user-route.js";
-import { createSecureRoute } from "./middlewares/session-middleware.js";
-import { prismaClient } from "../integration/prisma/prisma.js";
 import { dashboardRoute } from "./search/index.js";
+import chatRoutesmistral from "./rag/index.js";
+import memoryRoutes from "./memories/index.js";
+import { chatRoutes } from "./chat/index.js";
 
 export const allRoutes = new Hono();
 
@@ -25,6 +26,7 @@ allRoutes.use(
 
 allRoutes.route("/auth", authenticationsRoute);
 allRoutes.route("/memories", memoryRoutes);
-allRoutes.route("/ai", chatRoutes);
+allRoutes.route("/chat", chatRoutes);
 allRoutes.route("/profile", userRoute);
 allRoutes.route("/dashboard", dashboardRoute);
+allRoutes.route("/ai", chatRoutesmistral);

@@ -5,10 +5,11 @@ import { createSecureRoute } from "../middlewares/session-middleware.js";
 import { memorySchema, partialMemorySchema } from "../../validators/memory.js";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { pineconeApiKey } from "../../utils/environment/index.js";
+import { pc } from "../../lib/pinecone.js";
 
 
 
-export const pc = new Pinecone({ apiKey: pineconeApiKey });
+
 
 const memoryRoutes = createSecureRoute();
 

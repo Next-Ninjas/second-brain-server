@@ -84,3 +84,20 @@ model Verification {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+model ChatSession {
+  id        String     @id @default(uuid())
+  userId    String
+  title     String?
+  messages  ChatMessage[]
+  createdAt DateTime   @default(now())
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  sessionId   String
+  role        String   // 'user' or 'assistant'
+  content     String
+  createdAt   DateTime @default(now())
+  session     ChatSession @relation(fields: [sessionId], references: [id])
+}

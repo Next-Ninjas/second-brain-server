@@ -78,16 +78,14 @@
 
 
 import { createSecureRoute } from "../middlewares/session-middleware.js";
-import { mistralApiKey, pineconeApiKey } from "../../utils/environment";
-import { Mistral } from "@mistralai/mistralai";
-import { Pinecone } from "@pinecone-database/pinecone";
+
 import { prismaClient } from "../../integration/prisma/prisma.js";
+import { mistral, pc } from "../../lib/pinecone.js";
 
-const chatRoutes = createSecureRoute();
-const mistral = new Mistral({ apiKey: mistralApiKey });
-const pc = new Pinecone({ apiKey: pineconeApiKey });
+const chatRoutesmistral = createSecureRoute();
 
-chatRoutes.get("/chat", async (c) => {
+
+chatRoutesmistral.get("/chat", async (c) => {
   const user = c.get("user");
   const { q: query } = c.req.query();
 
@@ -163,7 +161,7 @@ ${contextText}
   });
 });
 
-export default chatRoutes;
+export default chatRoutesmistral;
 
 
 
