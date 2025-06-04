@@ -1,4 +1,4 @@
-import { serve } from "@hono/node-server";
+
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { webClientUrl } from "../utils/environment/index.js";
@@ -10,6 +10,7 @@ import { dashboardRoute } from "./search/index.js";
 import chatRoutesmistral from "./rag/index.js";
 import memoryRoutes from "./memories/index.js";
 import { chatRoutes } from "./chat/index.js";
+import { memoryRoute } from "./memory/index.js";
 
 export const allRoutes = new Hono();
 
@@ -30,3 +31,4 @@ allRoutes.route("/chat", chatRoutes);
 allRoutes.route("/profile", userRoute);
 allRoutes.route("/dashboard", dashboardRoute);
 allRoutes.route("/ai", chatRoutesmistral);
+allRoutes.route("/dashboard/memories",memoryRoute);
