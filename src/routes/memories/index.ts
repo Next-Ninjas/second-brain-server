@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 
 import { prismaClient } from "../../integration/prisma/prisma.js";
 import { createSecureRoute } from "../middlewares/session-middleware.js";
-import { memorySchema } from "../../validators/memory.js";
+import { memorySchema, partialMemorySchema } from "../../validators/memory.js";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { pineconeApiKey } from "../../utils/environment/index.js";
 
@@ -34,6 +34,7 @@ memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
     {
       id: memory.id,
       text: memory.content,
+      title: memory.title || "",
     },
   ];
 
@@ -114,6 +115,8 @@ memoryRoutes.put("/:id", zValidator("json", memorySchema), async (c) => {
     {
       id,
       text: body.content,
+      title: body.title || "",
+     
     },
   ];
   await namespace.upsertRecords(records);
@@ -135,6 +138,41 @@ memoryRoutes.delete("/:id", async (c) => {
   const index = pc.index("memories");
   const namespace = index.namespace(user.id);
   await namespace.deleteOne(id);
+
+  return c.json({ success: true });
+});
+
+
+memoryRoutes.patch("/:id", zValidator("json", partialMemorySchema), async (c) => {
+  const user = c.get("user");
+  const id = c.req.param("id");
+  const body = await c.req.json();
+
+  // Perform update using Prisma
+  const updated = await prismaClient.memory.updateMany({
+    where: { id, userId: user.id },
+    data: {
+      // These values are all optional
+      ...(body.content !== undefined && { content: body.content }),
+      ...(body.title !== undefined && { title: body.title }),
+      ...(body.tags !== undefined && { tags: body.tags }),
+      ...(body.url !== undefined && { url: body.url }),
+      ...(body.isFavorite !== undefined && { isFavorite: body.isFavorite }),
+    },
+  });
+
+  if (updated.count === 0) return c.notFound();
+
+  // ✅ Pinecone update (no URL)
+  const index = pc.index("memories");
+  const namespace = index.namespace(user.id);
+  const pineconeRecord = {
+    id,
+    text: body.content ?? "", // fallback to empty string
+    ...(body.title !== undefined && { title: body.title }),
+  };
+
+  await namespace.upsertRecords([pineconeRecord]);
 
   return c.json({ success: true });
 });
