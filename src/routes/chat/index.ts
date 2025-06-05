@@ -178,3 +178,13 @@ chatRoutes.delete("/:sessionId", async (c) => {
 });
 
 
+chatRoutes.get("/all/sessions", async (c) => {
+  const user = c.get("user");
+  const sessions = await prismaClient.chatMessage.findMany({
+   where: { session: { userId: user.id } },
+    orderBy: { createdAt: "desc" },
+  });
+    return c.json({ success: true, sessions });
+
+})
+
