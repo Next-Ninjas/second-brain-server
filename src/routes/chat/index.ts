@@ -2,6 +2,8 @@
 // import { mistral, pc } from "../../lib/pinecone";
 // import { createSecureRoute } from "../middlewares/session-middleware";
 
+
+
 // export const chatRoutes = createSecureRoute();
 
 // // Create new chat session
@@ -177,7 +179,6 @@
 //   return c.json({ success: true, message: "Session and its messages deleted" });
 // });
 
-
 import { prismaClient } from "../../integration/prisma/prisma";
 import { mistral, pc } from "../../lib/pinecone";
 import { createSecureRoute } from "../middlewares/session-middleware";
@@ -348,3 +349,15 @@ chatRoutes.delete("/:sessionId", async (c) => {
 
   return c.json({ success: true, message: "Session and its messages deleted" });
 });
+
+
+chatRoutes.get("/all/sessions", async (c) => {
+  const user = c.get("user");
+  const sessions = await prismaClient.chatMessage.findMany({
+   where: { session: { userId: user.id } },
+    orderBy: { createdAt: "desc" },
+  });
+    return c.json({ success: true, sessions });
+
+})
+
