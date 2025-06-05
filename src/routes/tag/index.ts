@@ -1,9 +1,9 @@
 import { createSecureRoute } from "../middlewares/session-middleware.js";
 import { prismaClient } from "../../integration/prisma/prisma.js";
 
-const tagRoutes = createSecureRoute();
+export const tagRoutes = createSecureRoute();
 
-tagRoutes.get("/tags/me/all", async (c) => {
+tagRoutes.get("/me/all", async (c) => {
   const user = c.get("user");
 
   const memories = await prismaClient.memory.findMany({
@@ -29,7 +29,7 @@ tagRoutes.get("/tags/me/all", async (c) => {
 
 
 
-tagRoutes.get("/tags/search", async (c) => {
+tagRoutes.get("/search", async (c) => {
   const user = c.get("user");
   const { q } = c.req.query();
 

@@ -11,6 +11,7 @@ import chatRoutesmistral from "./rag/index.js";
 import memoryRoutes from "./memories/index.js";
 import { chatRoutes } from "./chat/index.js";
 import { memoryRoute } from "./memory/index.js";
+import { tagRoutes } from "./tag/index.js";
 
 export const allRoutes = new Hono();
 
@@ -32,3 +33,4 @@ allRoutes.route("/profile", userRoute);
 allRoutes.route("/dashboard", dashboardRoute);
 allRoutes.route("/ai", chatRoutesmistral);
 allRoutes.route("/dashboard/memories",memoryRoute);
+allRoutes.route("/tags",tagRoutes);

@@ -21,6 +21,7 @@ model User {
   sessions Session[] @relation
   accounts Account[] @relation
   memories Memory[]  @relation
+  chatSessions  ChatSession[] @relation
 }
 
 model Memory {
@@ -91,6 +92,7 @@ model ChatSession {
   title     String?
   messages  ChatMessage[]
   createdAt DateTime   @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ChatMessage {
