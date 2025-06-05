@@ -351,13 +351,29 @@ chatRoutes.delete("/:sessionId", async (c) => {
 });
 
 
+// chatRoutes.get("/all/sessions", async (c) => {
+//   const user = c.get("user");
+//   const sessions = await prismaClient.chatMessage.findMany({
+//    where: { session: { userId: user.id } },
+//     orderBy: { createdAt: "desc" },
+//   });
+//     return c.json({ success: true, sessions });
+
+// })
+
 chatRoutes.get("/all/sessions", async (c) => {
   const user = c.get("user");
-  const sessions = await prismaClient.chatMessage.findMany({
-   where: { session: { userId: user.id } },
+
+  const sessions = await prismaClient.chatSession.findMany({
+    where: { userId: user.id },
     orderBy: { createdAt: "desc" },
+    include: {
+      messages: {
+        take: 1,
+        orderBy: { createdAt: "desc" },
+      },
+    }, // optional: get latest message
   });
-    return c.json({ success: true, sessions });
 
-})
-
+  return c.json({ success: true, sessions });
+});
