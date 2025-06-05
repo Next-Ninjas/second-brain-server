@@ -22,44 +22,8 @@ userRoute.get("/me", async (context) => {
         image: true,
         createdAt: true,
         updatedAt: true,
-        sessions: {
-          select: {
-            id: true,
-            token: true,
-            expiresAt: true,
-            ipAddress: true,
-            userAgent: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        accounts: {
-          select: {
-            id: true,
-            accountId: true,
-            providerId: true,
-            accessToken: true,
-            refreshToken: true,
-            accessTokenExpiresAt: true,
-            refreshTokenExpiresAt: true,
-            scope: true,
-            idToken: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        memories: {
-          select: {
-            id: true,
-            title: true,
-            content: true,
-            url: true,
-            tags: true,
-            metadata: true,
-            isFavorite: true,
-            createdAt: true,
-            updatedAt: true,
-          },
+        _count: {
+          select: { memories: true }, // 👈 Add count
         },
       },
     });
@@ -73,6 +37,7 @@ userRoute.get("/me", async (context) => {
         ...userData,
         name: userData.name || "",
         image: userData.image || "",
+        memoriesCount: userData._count.memories, // 👈 Add count from _count
       },
     });
   } catch (error) {
