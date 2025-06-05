@@ -382,7 +382,7 @@ ${contextText}`,
     },
   });
 
-  return c.json({ success: true, reply });
+  return c.json({ success: true, reply , memoryRecords });
 });
 
 
