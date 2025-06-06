@@ -312,7 +312,7 @@ chatRoutes.post("/:sessionId", async (c) => {
   if (!session)
     return c.json({ success: false, message: "Session not found" }, 404);
 
-  // Step 1: Save the user's message
+  // Step 1: Save user's message
   await prismaClient.chatMessage.create({
     data: {
       sessionId,
@@ -321,7 +321,7 @@ chatRoutes.post("/:sessionId", async (c) => {
     },
   });
 
-  // Step 2: Retrieve relevant memory from Pinecone
+  // Step 2: Retrieve memory from Pinecone
   const namespace = pc.index("memories").namespace(user.id);
   const pineconeResponse = await namespace.searchRecords({
     query: {
@@ -348,17 +348,15 @@ chatRoutes.post("/:sessionId", async (c) => {
     .map((m) => `- ${m.title || "Untitled"}: ${m.content}`)
     .join("\n");
 
-  // Step 3: Build system prompt and context-enhanced query
-  const systemPrompt = {
-    role: "system" as const,
+  const systemPrompt: { role: "system"; content: string } = {
+    role: "system",
     content: `You are a helpful assistant. Use the provided context and recent chat history to answer follow-up questions. 
 Resolve pronouns and references (like "his", "that person", etc.) based on earlier conversation.
-
 Use the memory context carefully to support your answer.`,
   };
 
-  const contextPrompt = {
-    role: "user" as const,
+  const contextPrompt: { role: "user"; content: string } = {
+    role: "user",
     content: `
 ## USER MESSAGE
 ${message}
@@ -368,18 +366,34 @@ ${contextText}
 `.trim(),
   };
 
-  const history = session.messages.slice(-10).map((m) => ({
-    role: m.role as "user" | "assistant" | "system" | "tool",
-    content: m.content,
-  }));
+  const history = session.messages.slice(-10).map((m) => {
+    const role = m.role;
+    if (
+      role === "user" ||
+      role === "assistant" ||
+      role === "system" ||
+      role === "tool"
+    ) {
+      return {
+        role,
+        content: m.content,
+      } as
+        | { role: "user"; content: string }
+        | { role: "assistant"; content: string }
+        | { role: "system"; content: string }
+        | { role: "tool"; content: string };
+    }
+    throw new Error(`Invalid message role: ${role}`);
+  });
 
-  const promptMessages = [
-    systemPrompt,
-    ...history,
-    contextPrompt,
-  ];
+  const promptMessages: (
+    | { role: "user"; content: string }
+    | { role: "assistant"; content: string }
+    | { role: "system"; content: string }
+    | { role: "tool"; content: string }
+  )[] = [systemPrompt, ...history, contextPrompt];
 
-  // Step 4: Get AI response
+  // Step 3: Get AI response from Mistral
   const aiResponse = await mistral.chat.complete({
     model: "mistral-large-latest",
     messages: promptMessages,
@@ -396,7 +410,7 @@ ${contextText}
             .join("")
         : "I don't know how to respond.";
 
-  // Step 5: Save assistant response
+  // Step 4: Save assistant's reply
   await prismaClient.chatMessage.create({
     data: {
       sessionId,
@@ -407,6 +421,7 @@ ${contextText}
 
   return c.json({ success: true, reply });
 });
+
 
 
 
