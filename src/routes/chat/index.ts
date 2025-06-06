@@ -202,6 +202,105 @@ chatRoutes.post("/session", async (c) => {
 
 
 
+// chatRoutes.post("/:sessionId", async (c) => {
+//   const user = c.get("user");
+//   const { sessionId } = c.req.param();
+//   const { message } = await c.req.json();
+
+//   const session = await prismaClient.chatSession.findFirst({
+//     where: { id: sessionId, userId: user.id },
+//     include: { messages: true },
+//   });
+
+//   if (!session) return c.json({ success: false, message: "Session not found" }, 404);
+
+//   // Save user's message
+//   await prismaClient.chatMessage.create({
+//     data: {
+//       sessionId,
+//       role: "user",
+//       content: message,
+//     },
+//   });
+
+//   // --- 🔍 Pinecone memory search ---
+//   const namespace = pc.index("memories").namespace(user.id);
+//   const pineconeResponse = await namespace.searchRecords({
+//     query: { inputs: { text: message }, topK: 20 },
+//     rerank: { model: "bge-reranker-v2-m3", topN: 5, rankFields: ["text"] },
+//   });
+
+//   const relevantHits = pineconeResponse.result.hits.filter(
+//     (hit) => hit._score && hit._score >= 0.2
+//   );
+
+//   const ids = relevantHits.map((hit) => hit._id);
+
+//   const memoryRecords = await prismaClient.memory.findMany({
+//     where: { id: { in: ids }, userId: user.id },
+//   });
+
+//   const contextText = memoryRecords
+//     .map((m) => `- ${m.title || "Untitled"}: ${m.content}`)
+//     .join("\n");
+
+//   // --- 🧠 Prepare chat history ---
+//   const history = session.messages.slice(-10).map((m) => ({
+//     role: m.role as "user" | "assistant" | "system" | "tool",
+//     content: m.content,
+//   }));
+
+//   // --- 🧠 Add better system prompt for reference tracking ---
+//   const systemPrompt = {
+//     role: "system" as const,
+//     content: `You are a helpful assistant. Use context and previous chat messages to answer follow-up questions.
+// Resolve pronouns and references (like "his", "that person", etc.) based on earlier parts of the conversation.
+
+// Contextual user memories:
+// ${contextText}`,
+//   };
+
+//   const promptMessages = [
+//     systemPrompt,
+//     ...history,
+//     {
+//       role: "user" as const,
+//       content: message,
+//     },
+//   ];
+
+//   // --- 🤖 Get response from Mistral (LARGE) ---
+//   const aiResponse = await mistral.chat.complete({
+//     model: "mistral-large-latest",
+//     messages: promptMessages,
+//   });
+
+//   const rawReply = aiResponse.choices?.[0]?.message?.content;
+//   const reply =
+//     typeof rawReply === "string"
+//       ? rawReply
+//       : Array.isArray(rawReply)
+//         ? rawReply
+//             .filter((chunk) => "text" in chunk && typeof chunk.text === "string")
+//             .map((chunk) => (chunk as { text: string }).text)
+//             .join("")
+//         : "I don't know how to respond.";
+
+//   await prismaClient.chatMessage.create({
+//     data: {
+//       sessionId,
+//       role: "assistant",
+//       content: reply,
+//     },
+//   });
+
+//   return c.json({ success: true, reply  });
+// });
+
+
+// Get all messages in a session
+
+
 chatRoutes.post("/:sessionId", async (c) => {
   const user = c.get("user");
   const { sessionId } = c.req.param();
@@ -212,9 +311,10 @@ chatRoutes.post("/:sessionId", async (c) => {
     include: { messages: true },
   });
 
-  if (!session) return c.json({ success: false, message: "Session not found" }, 404);
+  if (!session)
+    return c.json({ success: false, message: "Session not found" }, 404);
 
-  // Save user's message
+  // Step 1: Save user's message
   await prismaClient.chatMessage.create({
     data: {
       sessionId,
@@ -223,17 +323,23 @@ chatRoutes.post("/:sessionId", async (c) => {
     },
   });
 
-  // --- 🔍 Pinecone memory search ---
+  // Step 2: Search Pinecone for memory
   const namespace = pc.index("memories").namespace(user.id);
   const pineconeResponse = await namespace.searchRecords({
-    query: { inputs: { text: message }, topK: 20 },
-    rerank: { model: "bge-reranker-v2-m3", topN: 5, rankFields: ["text"] },
+    query: {
+      inputs: { text: message },
+      topK: 20,
+    },
+    rerank: {
+      model: "bge-reranker-v2-m3",
+      topN: 5,
+      rankFields: ["text"],
+    },
   });
 
   const relevantHits = pineconeResponse.result.hits.filter(
     (hit) => hit._score && hit._score >= 0.2
   );
-
   const ids = relevantHits.map((hit) => hit._id);
 
   const memoryRecords = await prismaClient.memory.findMany({
@@ -244,13 +350,13 @@ chatRoutes.post("/:sessionId", async (c) => {
     .map((m) => `- ${m.title || "Untitled"}: ${m.content}`)
     .join("\n");
 
-  // --- 🧠 Prepare chat history ---
+  // Step 3: Collect chat history
   const history = session.messages.slice(-10).map((m) => ({
     role: m.role as "user" | "assistant" | "system" | "tool",
     content: m.content,
   }));
 
-  // --- 🧠 Add better system prompt for reference tracking ---
+  // Step 4: System prompt with memory context injected
   const systemPrompt = {
     role: "system" as const,
     content: `You are a helpful assistant. Use context and previous chat messages to answer follow-up questions.
@@ -263,13 +369,10 @@ ${contextText}`,
   const promptMessages = [
     systemPrompt,
     ...history,
-    {
-      role: "user" as const,
-      content: message,
-    },
+    { role: "user" as const, content: message },
   ];
 
-  // --- 🤖 Get response from Mistral (LARGE) ---
+  // Step 5: Get AI reply from Mistral
   const aiResponse = await mistral.chat.complete({
     model: "mistral-large-latest",
     messages: promptMessages,
@@ -286,6 +389,7 @@ ${contextText}`,
             .join("")
         : "I don't know how to respond.";
 
+  // Step 6: Save assistant response
   await prismaClient.chatMessage.create({
     data: {
       sessionId,
@@ -294,11 +398,12 @@ ${contextText}`,
     },
   });
 
-  return c.json({ success: true, reply , memoryRecords });
+  return c.json({ success: true, reply });
 });
 
 
-// Get all messages in a session
+
+
 chatRoutes.get("/:sessionId/messages", async (c) => {
   const user = c.get("user");
   const { sessionId } = c.req.param();
