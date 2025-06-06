@@ -299,8 +299,6 @@ chatRoutes.post("/session", async (c) => {
 
 
 // Get all messages in a session
-
-
 chatRoutes.post("/:sessionId", async (c) => {
   const user = c.get("user");
   const { sessionId } = c.req.param();
@@ -314,7 +312,7 @@ chatRoutes.post("/:sessionId", async (c) => {
   if (!session)
     return c.json({ success: false, message: "Session not found" }, 404);
 
-  // Step 1: Save user's message
+  // Step 1: Save the user's message
   await prismaClient.chatMessage.create({
     data: {
       sessionId,
@@ -323,7 +321,7 @@ chatRoutes.post("/:sessionId", async (c) => {
     },
   });
 
-  // Step 2: Search Pinecone for memory
+  // Step 2: Retrieve relevant memory from Pinecone
   const namespace = pc.index("memories").namespace(user.id);
   const pineconeResponse = await namespace.searchRecords({
     query: {
@@ -350,29 +348,38 @@ chatRoutes.post("/:sessionId", async (c) => {
     .map((m) => `- ${m.title || "Untitled"}: ${m.content}`)
     .join("\n");
 
-  // Step 3: Collect chat history
+  // Step 3: Build system prompt and context-enhanced query
+  const systemPrompt = {
+    role: "system" as const,
+    content: `You are a helpful assistant. Use the provided context and recent chat history to answer follow-up questions. 
+Resolve pronouns and references (like "his", "that person", etc.) based on earlier conversation.
+
+Use the memory context carefully to support your answer.`,
+  };
+
+  const contextPrompt = {
+    role: "user" as const,
+    content: `
+## USER MESSAGE
+${message}
+
+## CONTEXTUAL USER MEMORIES
+${contextText}
+`.trim(),
+  };
+
   const history = session.messages.slice(-10).map((m) => ({
     role: m.role as "user" | "assistant" | "system" | "tool",
     content: m.content,
   }));
 
-  // Step 4: System prompt with memory context injected
-  const systemPrompt = {
-    role: "system" as const,
-    content: `You are a helpful assistant. Use context and previous chat messages to answer follow-up questions.
-Resolve pronouns and references (like "his", "that person", etc.) based on earlier parts of the conversation.
-
-Contextual user memories:
-${contextText}`,
-  };
-
   const promptMessages = [
     systemPrompt,
     ...history,
-    { role: "user" as const, content: message },
+    contextPrompt,
   ];
 
-  // Step 5: Get AI reply from Mistral
+  // Step 4: Get AI response
   const aiResponse = await mistral.chat.complete({
     model: "mistral-large-latest",
     messages: promptMessages,
@@ -389,7 +396,7 @@ ${contextText}`,
             .join("")
         : "I don't know how to respond.";
 
-  // Step 6: Save assistant response
+  // Step 5: Save assistant response
   await prismaClient.chatMessage.create({
     data: {
       sessionId,
@@ -400,6 +407,9 @@ ${contextText}`,
 
   return c.json({ success: true, reply });
 });
+
+
+
 
 
 
