@@ -26,12 +26,12 @@ git clone https://github.com/Next-Ninjas/second-brain-server.git
 cd second-brain-backend
 ```
 
-
+### 2. Install dependencies
 ```
 pnpm install
 ```
 
-# Create .env File
+### 3. Create .env File and add the respective url and API keys
 
 ```env
 DATABASE_URL=your_postgres_database_url
@@ -41,21 +41,19 @@ PINECONE_API_KEY=your_pinecone_key
 PINECONE_ENVIRONMENT=your_pinecone_environment
 ```
 
+### 4.migrate the schema (before create a project in supabase)
+
 ```
 npx prisma migrate dev --name init
 ```
 
-
-
-
+### 5. run the server
 
 ```
-
 pnpm run dev
 ```
 
-```
-open http://localhost:3000
-```
+open [http://localhost:3000](http://localhost:3000)
+
 
 
