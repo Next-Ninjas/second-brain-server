@@ -9,7 +9,7 @@ This is the backend of **Second Brain(Neuronote)**, an AI-powered personal assis
 - **Framework:** [Hono](https://hono.dev/)
 - **ORM:** [Prisma](https://www.prisma.io/)
 - **Database:** PostgreSQL
-- **Authentication:** [BetterAuth](https://betterstack.dev)
+- **Authentication:** [BetterAuth](https://www.better-auth.com/)
 - **Vector Database:** [Pinecone](https://www.pinecone.io/)
 - **LLM Provider:** [Mistral](https://mistral.ai/)
 - **Hosting:** Azure 
