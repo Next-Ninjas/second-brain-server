@@ -39,12 +39,12 @@ export const betterAuthClient = betterAuth({
   //   },
   // },
 
-// advanced: {
-//     crossSubDomainCookies: {
-//       enabled: true,
-//       domain: "neuronote.site",
-//     },
-//   },
+advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: "neuronote.site",
+    },
+  },
 
 
 });
