@@ -12,7 +12,7 @@ This is the backend of **Second Brain(Neuronote)**, an AI-powered personal assis
 - **Authentication:** [BetterAuth](https://betterstack.dev)
 - **Vector Database:** [Pinecone](https://www.pinecone.io/)
 - **LLM Provider:** [Mistral](https://mistral.ai/)
-- **Hosting:** Azure / Vercel (configurable)
+- **Hosting:** Azure 
 
 ---
 
