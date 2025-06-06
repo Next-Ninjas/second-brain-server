@@ -22,7 +22,7 @@ This is the backend of **Second Brain(Neuronote)**, an AI-powered personal assis
 ### 1. Clone the Repository
 
 ```
-git clone https://github.com/YOUR_USERNAME/second-brain-backend.git
+git clone https://github.com/Next-Ninjas/second-brain-server.git
 cd second-brain-backend
 ```
 
@@ -33,13 +33,13 @@ pnpm install
 
 # Create .env File
 
+```env
 DATABASE_URL=your_postgres_database_url
 DIRECT_URL=your_postgres_direct_url
 MISTRAL_API_KEY=your_mistral_key
 PINECONE_API_KEY=your_pinecone_key
 PINECONE_ENVIRONMENT=your_pinecone_environment
-
-
+```
 
 ```
 npx prisma migrate dev --name init
