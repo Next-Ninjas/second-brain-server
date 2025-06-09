@@ -286,8 +286,7 @@ ${contextText}
 
   // Step 4: Get AI response from Mistral
   const aiResponse = await mistral.chat.complete({
-    // model: "mistral-large-latest",
-    model : "Mistral-7B-Instruct-v0.2",
+    model: "mistral-large-latest",
     messages: promptMessages,
   });
 
