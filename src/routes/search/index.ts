@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import { prismaClient as prisma } from "../../integration/prisma/prisma.js";
 import { createSecureRoute } from "../middlewares/session-middleware.js";
 
