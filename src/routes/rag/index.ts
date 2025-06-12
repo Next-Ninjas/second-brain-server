@@ -1,3 +1,4 @@
+
 import { createSecureRoute } from "../middlewares/session-middleware.js";
 import { prismaClient } from "../../integration/prisma/prisma.js";
 import { mistral, pc } from "../../lib/pinecone.js";

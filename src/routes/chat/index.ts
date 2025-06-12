@@ -21,6 +21,117 @@ chatRoutes.post("/session", async (c) => {
 
 
 
+// chatRoutes.post("/:sessionId", async (c) => {
+//   const user = c.get("user");
+//   const { sessionId } = c.req.param();
+//   const { message } = await c.req.json();
+
+//   const session = await prismaClient.chatSession.findFirst({
+//     where: { id: sessionId, userId: user.id },
+//     include: { messages: true },
+//   });
+
+//   if (!session) {
+//     return c.json({ success: false, message: "Session not found" }, 404);
+//   }
+
+//   // Step 1: Save user's message
+//   await prismaClient.chatMessage.create({
+//     data: {
+//       sessionId,
+//       role: "user",
+//       content: message,
+//     },
+//   });
+
+//   // Step 2: Retrieve ALL user memories
+//   const memoryRecords = await prismaClient.memory.findMany({
+//     where: { userId: user.id },
+//     orderBy: { createdAt: "desc" },
+//   });
+
+//   // Optional: Limit number of memories for token safety
+//   const MAX_MEMORIES = 30;
+//   const contextText = memoryRecords
+//     .slice(0, MAX_MEMORIES)
+//     .map((m) => `- ${m.title || "Untitled"}: ${m.content}`)
+//     .join("\n");
+
+//   // Step 3: Construct prompt messages
+//   const systemPrompt: { role: "system"; content: string } = {
+//     role: "system",
+//     content: `You are a helpful assistant. Use the provided context and recent chat history to answer follow-up questions.
+// Resolve pronouns and references based on earlier conversation.
+// Use the memory context carefully to support your answer.`,
+//   };
+
+//   const contextPrompt: { role: "user"; content: string } = {
+//     role: "user",
+//     content: `
+// ## USER MESSAGE
+// ${message}
+
+// ## CONTEXTUAL USER MEMORIES
+// ${contextText}
+// `.trim(),
+//   };
+
+//   const history = session.messages.slice(-10).map((m) => {
+//     const role = m.role;
+//     if (
+//       role === "user" ||
+//       role === "assistant" ||
+//       role === "system" ||
+//       role === "tool"
+//     ) {
+//       return {
+//         role,
+//         content: m.content,
+//       } as
+//         | { role: "user"; content: string }
+//         | { role: "assistant"; content: string }
+//         | { role: "system"; content: string }
+//         | { role: "tool"; content: string };
+//     }
+//     throw new Error(`Invalid message role: ${role}`);
+//   });
+
+//   const promptMessages: (
+//     | { role: "user"; content: string }
+//     | { role: "assistant"; content: string }
+//     | { role: "system"; content: string }
+//     | { role: "tool"; content: string }
+//   )[] = [systemPrompt, ...history, contextPrompt];
+
+//   // Step 4: Get AI response from Mistral
+//   const aiResponse = await mistral.chat.complete({
+//     model: "mistral-large-latest",
+//     messages: promptMessages,
+//   });
+
+//   const rawReply = aiResponse.choices?.[0]?.message?.content;
+//   const reply =
+//     typeof rawReply === "string"
+//       ? rawReply
+//       : Array.isArray(rawReply)
+//         ? rawReply
+//             .filter((chunk) => "text" in chunk && typeof chunk.text === "string")
+//             .map((chunk) => (chunk as { text: string }).text)
+//             .join("")
+//         : "I don't know how to respond.";
+
+//   // Step 5: Save assistant's reply
+//   await prismaClient.chatMessage.create({
+//     data: {
+//       sessionId,
+//       role: "assistant",
+//       content: reply,
+//     },
+//   });
+
+//   return c.json({ success: true, reply });
+// });
+
 chatRoutes.post("/:sessionId", async (c) => {
   const user = c.get("user");
   const { sessionId } = c.req.param();
@@ -44,16 +155,40 @@ chatRoutes.post("/:sessionId", async (c) => {
     },
   });
 
-  // Step 2: Retrieve ALL user memories
-  const memoryRecords = await prismaClient.memory.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
+  // Step 2: Retrieve relevant memories from Pinecone
+  const namespace = pc.index("memories").namespace(user.id);
+  const pineconeResponse = await namespace.searchRecords({
+    query: {
+      inputs: { text: message },
+      topK: 20,
+    },
+    rerank: {
+      model: "bge-reranker-v2-m3",
+      topN: 5,
+      rankFields: ["text"],
+    },
   });
 
-  // Optional: Limit number of memories for token safety
-  const MAX_MEMORIES = 30;
-  const contextText = memoryRecords
-    .slice(0, MAX_MEMORIES)
+  const relevantHits = pineconeResponse.result.hits.filter(
+    (hit) => hit._score && hit._score >= 0.2
+  );
+
+  const ids = relevantHits.map((hit) => hit._id);
+
+  const memoryRecords = await prismaClient.memory.findMany({
+    where: {
+      id: { in: ids },
+      userId: user.id,
+    },
+  });
+
+  const memoryMap = new Map(memoryRecords.map((m) => [m.id, m]));
+
+  const relevantMemories = relevantHits
+    .map((hit) => memoryMap.get(hit._id))
+    .filter((m): m is NonNullable<typeof m> => Boolean(m));
+
+  const contextText = relevantMemories
     .map((m) => `- ${m.title || "Untitled"}: ${m.content}`)
     .join("\n");
 
@@ -129,9 +264,13 @@ ${contextText}
     },
   });
 
-  return c.json({ success: true, reply });
+  // Step 6: Return response along with relevant memories
+  return c.json({
+    success: true,
+    reply,
+    relevantMemories, // <-- Included in response
+  });
 });
-
 
 
 chatRoutes.get("/:sessionId/messages", async (c) => {
