@@ -1,18 +1,11 @@
 import { zValidator } from "@hono/zod-validator";
-
 import { prismaClient } from "../../integration/prisma/prisma.js";
 import { createSecureRoute } from "../middlewares/session-middleware.js";
 import { memorySchema, partialMemorySchema } from "../../validators/memory.js";
-import { Pinecone } from "@pinecone-database/pinecone";
-import { pineconeApiKey } from "../../utils/environment/index.js";
 import { pc } from "../../lib/pinecone.js";
 
 
-
-
-
 const memoryRoutes = createSecureRoute();
-
 
 memoryRoutes.post("/", zValidator("json", memorySchema), async (c) => {
   const user = c.get("user");
@@ -75,9 +68,7 @@ memoryRoutes.get("/recent", async (c) => {
 });
 
 
-// ✅ GET single memory
-
-
+//  GET single memory
 memoryRoutes.put("/:id", zValidator("json", memorySchema), async (c) => {
   const user = c.get("user");
   const id = c.req.param("id");
@@ -151,7 +142,7 @@ memoryRoutes.patch("/:id", zValidator("json", partialMemorySchema), async (c) =>
 
   if (updated.count === 0) return c.notFound();
 
-  // ✅ Pinecone update (no URL)
+  //  Pinecone update (no URL)
   const index = pc.index("memories");
   const namespace = index.namespace(user.id);
   const pineconeRecord = {

@@ -1,10 +1,7 @@
-
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { webClientUrl } from "../utils/environment/index.js";
 import { authenticationsRoute } from "./authentications/index.js";
-
-
 import { userRoute } from "./user/user-route.js";
 import { dashboardRoute } from "./search/index.js";
 import chatRoutesmistral from "./rag/index.js";
