@@ -132,6 +132,8 @@ chatRoutes.post("/session", async (c) => {
 //   return c.json({ success: true, reply });
 // });
 
+
+
 chatRoutes.post("/:sessionId", async (c) => {
   const user = c.get("user");
   const { sessionId } = c.req.param();
@@ -155,42 +157,65 @@ chatRoutes.post("/:sessionId", async (c) => {
     },
   });
 
-  // Step 2: Retrieve relevant memories from Pinecone
-  const namespace = pc.index("memories").namespace(user.id);
-  const pineconeResponse = await namespace.searchRecords({
-    query: {
-      inputs: { text: message },
-      topK: 20,
-    },
-    rerank: {
-      model: "bge-reranker-v2-m3",
-      topN: 5,
-      rankFields: ["text"],
-    },
-  });
-
-  const relevantHits = pineconeResponse.result.hits.filter(
-    (hit) => hit._score && hit._score >= 0.2
-  );
-
-  const ids = relevantHits.map((hit) => hit._id);
-
+  // Step 2a: Retrieve ALL user memories (existing logic)
   const memoryRecords = await prismaClient.memory.findMany({
-    where: {
-      id: { in: ids },
-      userId: user.id,
-    },
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
   });
 
-  const memoryMap = new Map(memoryRecords.map((m) => [m.id, m]));
-
-  const relevantMemories = relevantHits
-    .map((hit) => memoryMap.get(hit._id))
-    .filter((m): m is NonNullable<typeof m> => Boolean(m));
-
-  const contextText = relevantMemories
-    .map((m) => `- ${m.title || "Untitled"}: ${m.content}`)
+  const MAX_MEMORIES = 30;
+  const contextText = memoryRecords
+    .slice(0, MAX_MEMORIES)
+    .map((m) => `- ${m.title ?? "Untitled"}: ${m.content}`)
     .join("\n");
+
+  // Step 2b: Retrieve RELEVANT memories via Pinecone (added separately)
+  let relevantMemories: { id: string; title: string; content: string }[] = [];
+
+  try {
+    const namespace = pc.index("memories").namespace(user.id);
+    const pineconeResponse = await namespace.searchRecords({
+      query: {
+        inputs: { text: message },
+        topK: 20,
+      },
+      rerank: {
+        model: "bge-reranker-v2-m3",
+        topN: 5,
+        rankFields: ["text"],
+      },
+    });
+
+    const relevantHits = pineconeResponse.result.hits.filter(
+      (hit) => hit._score && hit._score >= 0.2
+    );
+
+    const ids = relevantHits.map((hit) => hit._id);
+
+    const pineconeMemories = await prismaClient.memory.findMany({
+      where: {
+        id: { in: ids },
+        userId: user.id,
+      },
+    });
+
+    const memoryMap = new Map(pineconeMemories.map((m) => [m.id, m]));
+
+    relevantMemories = relevantHits
+      .map((hit) => {
+        const m = memoryMap.get(hit._id);
+        return m
+          ? {
+              id: m.id,
+              title: m.title ?? "Untitled",
+              content: m.content,
+            }
+          : null;
+      })
+      .filter((m): m is { id: string; title: string; content: string } => m !== null);
+  } catch (err) {
+    console.error("Pinecone search failed:", err);
+  }
 
   // Step 3: Construct prompt messages
   const systemPrompt: { role: "system"; content: string } = {
@@ -264,13 +289,11 @@ ${contextText}
     },
   });
 
-  // Step 6: Return response along with relevant memories
-  return c.json({
-    success: true,
-    reply,
-    relevantMemories, // <-- Included in response
-  });
+  return c.json({ success: true, reply, relevantMemories });
 });
+
+
+
 
 
 chatRoutes.get("/:sessionId/messages", async (c) => {
