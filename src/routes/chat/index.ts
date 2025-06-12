@@ -289,7 +289,7 @@ ${contextText}
     },
   });
 
-  return c.json({ success: true, reply, relevantMemories });
+  return c.json({ success: true, reply, memoryRecords: relevantMemories });
 });
 
 
